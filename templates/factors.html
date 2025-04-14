@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>环境因素 - 福建省碳汇量可视化系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <nav class="bg-green-700 text-white shadow-lg">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+                        <h1 class="text-2xl font-bold">福建省碳汇量可视化系统</h1>
+                    </div>
+                    <ul class="flex space-x-6">
+                        <li><a href="/" class="hover:text-green-200 font-medium">首页</a></li>
+                        <li><a href="/map" class="hover:text-green-200 font-medium">地图展示</a></li>
+                        <li><a href="/trends" class="hover:text-green-200 font-medium">趋势分析</a></li>
+                        <li><a href="/comparison" class="hover:text-green-200 font-medium">区域对比</a></li>
+                        <li><a href="/factors" class="hover:text-green-200 font-medium">环境因素</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主要内容区 -->
+        <main class="flex-grow container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold text-green-700 mb-6">环境因素与碳汇量关系分析</h1>
+            
+            <!-- 环境因素说明 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">主要环境因素影响</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-gray-600 mb-3">
+                            碳汇量受多种环境因素影响，主要包括：
+                        </p>
+                        <ul class="list-disc pl-5 text-gray-600 space-y-1">
+                            <li>气温变化：影响植物光合作用效率和呼吸作用强度</li>
+                            <li>降水量：影响植物生长速度和森林生态系统稳定性</li>
+                            <li>土壤条件：决定土壤有机碳的固定能力</li>
+                            <li>植被类型：不同植物种类有不同的碳固定能力</li>
+                            <li>人类活动：森林砍伐、植树造林等直接影响碳汇</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">
+                            福建省位于亚热带季风气候区，气候温和多雨，森林生态系统多样，
+                            对于研究环境因素与碳汇的关系具有典型意义。本页面通过数据可视化，
+                            展示了福建省主要环境因素与碳汇量之间的相关性。
+                        </p>
+                        <p class="text-gray-600 mt-3">
+                            通过分析这些相关性，可以为制定有效的碳汇增强策略提供科学依据，
+                            也有助于预测未来气候变化情境下的碳汇潜力。
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 温度与碳汇关系 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">温度与碳汇关系</h2>
+                    <div style="height: 300px;">
+                        <canvas id="temperature-chart"></canvas>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-lg font-semibold text-green-700 mb-2">分析解读</h3>
+                        <p class="text-gray-600">
+                            数据显示，在适宜温度范围内（15°C-18°C），碳汇量随温度升高而增加；
+                            但当温度超过阈值后，碳汇量增长趋于平缓甚至下降，呈现倒U形关系。
+                            这与植物光合作用和呼吸作用在不同温度下的变化规律相符。
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 降水与碳汇关系 -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">降水与碳汇关系</h2>
+                    <div style="height: 300px;">
+                        <canvas id="precipitation-chart"></canvas>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-lg font-semibold text-green-700 mb-2">分析解读</h3>
+                        <p class="text-gray-600">
+                            降水量与碳汇量呈现较强的正相关关系，特别是在年均降水量1500-1800mm范围内，
+                            碳汇量随降水增加而明显提高。这反映了水分在植物生长和碳固定过程中的关键作用。
+                            但极端降水事件（如台风）可能对森林生态系统造成破坏，短期内降低碳汇能力。
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 综合环境因素分析 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">综合环境因素趋势分析</h2>
+                <div style="height: 400px;">
+                    <canvas id="comprehensive-chart"></canvas>
+                </div>
+                <div class="mt-4">
+                    <h3 class="text-lg font-semibold text-green-700 mb-2">趋势解读</h3>
+                    <p class="text-gray-600">
+                        从2015年至2025年的综合数据来看，随着全球气候变化，福建省年平均温度呈现微弱上升趋势，
+                        年降水量则有一定波动。与此同时，碳汇量整体保持增长态势，表明福建省的碳汇能力在现有气候条件下具有较强韧性。
+                        但气候变化如果继续加剧，未来碳汇潜力可能面临不确定性。
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 相关性分析 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">环境因素相关性分析</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-green-100">
+                                    <th class="px-4 py-2">环境因素</th>
+                                    <th class="px-4 py-2">相关系数</th>
+                                    <th class="px-4 py-2">显著性</th>
+                                    <th class="px-4 py-2">影响程度</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white">
+                                    <td class="px-4 py-2">年平均温度</td>
+                                    <td class="px-4 py-2">0.62</td>
+                                    <td class="px-4 py-2">P < 0.05</td>
+                                    <td class="px-4 py-2">
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="bg-green-600 h-2.5 rounded-full" style="width: 62%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-4 py-2">年降水量</td>
+                                    <td class="px-4 py-2">0.78</td>
+                                    <td class="px-4 py-2">P < 0.01</td>
+                                    <td class="px-4 py-2">
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="bg-green-600 h-2.5 rounded-full" style="width: 78%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="px-4 py-2">日照时长</td>
+                                    <td class="px-4 py-2">0.55</td>
+                                    <td class="px-4 py-2">P < 0.05</td>
+                                    <td class="px-4 py-2">
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="bg-green-600 h-2.5 rounded-full" style="width: 55%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="px-4 py-2">土壤有机质</td>
+                                    <td class="px-4 py-2">0.69</td>
+                                    <td class="px-4 py-2">P < 0.01</td>
+                                    <td class="px-4 py-2">
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="bg-green-600 h-2.5 rounded-full" style="width: 69%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="px-4 py-2">空气质量</td>
+                                    <td class="px-4 py-2">0.43</td>
+                                    <td class="px-4 py-2">P < 0.1</td>
+                                    <td class="px-4 py-2">
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div class="bg-green-600 h-2.5 rounded-full" style="width: 43%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-green-700 mb-2">政策建议</h3>
+                        <p class="text-gray-600 mb-3">
+                            基于环境因素分析，提出以下政策建议：
+                        </p>
+                        <ul class="list-disc pl-5 text-gray-600 space-y-1">
+                            <li>优化林分结构，选择适应性强、碳固定能力高的树种进行造林</li>
+                            <li>加强水资源管理，提高灌溉效率，减轻干旱影响</li>
+                            <li>开展土壤改良，增加土壤有机质含量</li>
+                            <li>加强森林保护，减少人为干扰和破坏</li>
+                            <li>建立气候变化与碳汇监测网络，提高预警能力</li>
+                            <li>推动科学研究，深入了解不同生态系统碳汇机制</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部页脚 -->
+        <footer class="bg-green-800 text-white py-6">
+            <div class="container mx-auto px-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">关于我们</h3>
+                        <p class="text-green-200">福建省碳汇量可视化系统提供了丰富的数据可视化功能，帮助用户了解福建省各地区碳汇情况。</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">相关链接</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-green-200 hover:text-white">福建省生态环境厅</a></li>
+                            <li><a href="#" class="text-green-200 hover:text-white">碳中和研究中心</a></li>
+                            <li><a href="#" class="text-green-200 hover:text-white">生态文明建设</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">联系我们</h3>
+                        <p class="text-green-200">邮箱：contact@fujian-carbonsink.org</p>
+                        <p class="text-green-200">电话：0591-12345678</p>
+                    </div>
+                </div>
+                <div class="border-t border-green-700 mt-6 pt-6 text-center">
+                    <p class="text-green-200">© 2025 福建省碳汇量可视化系统 - 保留所有权利</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载环境因素数据
+            fetch('/api/environmental_factors')
+                .then(response => response.json())
+                .then(data => {
+                    renderTemperatureChart(data);
+                    renderPrecipitationChart(data);
+                    renderComprehensiveChart(data);
+                })
+                .catch(error => console.error('获取环境因素数据失败:', error));
+        });
+        
+        // 渲染温度与碳汇关系图表
+        function renderTemperatureChart(data) {
+            const ctx = document.getElementById('temperature-chart').getContext('2d');
+            
+            const chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '温度与碳汇关系',
+                        data: data.temperature.map((temp, i) => ({
+                            x: temp,
+                            y: data.carbon_sink[i]
+                        })),
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgb(16, 185, 129)',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '年平均温度与碳汇量关系'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `温度: ${context.parsed.x}°C, 碳汇量: ${context.parsed.y}万吨`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '年平均温度 (°C)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '碳汇量 (万吨CO₂当量)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 添加趋势线 (使用简单线性回归)
+            addTrendline(chart, data.temperature, data.carbon_sink);
+        }
+        
+        // 渲染降水量与碳汇关系图表
+        function renderPrecipitationChart(data) {
+            const ctx = document.getElementById('precipitation-chart').getContext('2d');
+            
+            const chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '降水量与碳汇关系',
+                        data: data.precipitation.map((precip, i) => ({
+                            x: precip,
+                            y: data.carbon_sink[i]
+                        })),
+                        backgroundColor: 'rgba(6, 182, 212, 0.7)',
+                        borderColor: 'rgb(6, 182, 212)',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '年降水量与碳汇量关系'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `降水量: ${context.parsed.x}mm, 碳汇量: ${context.parsed.y}万吨`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '年降水量 (mm)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '碳汇量 (万吨CO₂当量)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 添加趋势线
+            addTrendline(chart, data.precipitation, data.carbon_sink);
+        }
+        
+        // 渲染综合环境因素趋势图
+        function renderComprehensiveChart(data) {
+            const ctx = document.getElementById('comprehensive-chart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.years,
+                    datasets: [
+                        {
+                            label: '碳汇量 (万吨CO₂当量)',
+                            data: data.carbon_sink,
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderColor: 'rgb(16, 185, 129)',
+                            borderWidth: 2,
+                            yAxisID: 'y',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '年平均温度 (°C)',
+                            data: data.temperature,
+                            borderColor: 'rgb(245, 158, 11)',
+                            borderWidth: 2,
+                            yAxisID: 'y1',
+                            tension: 0.3
+                        },
+                        {
+                            label: '年降水量 (mm/100)',
+                            data: data.precipitation.map(p => p / 100), // 缩小比例以适应图表
+                            borderColor: 'rgb(59, 130, 246)',
+                            borderWidth: 2,
+                            yAxisID: 'y1',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '环境因素与碳汇量年度趋势(2015-2025)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: '碳汇量 (万吨CO₂当量)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: '温度 (°C) / 降水量 (mm/100)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 添加趋势线函数
+        function addTrendline(chart, xData, yData) {
+            // 计算线性回归
+            const n = xData.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+            
+            for (let i = 0; i < n; i++) {
+                sumX += xData[i];
+                sumY += yData[i];
+                sumXY += xData[i] * yData[i];
+                sumX2 += xData[i] * xData[i];
+            }
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            // 计算趋势线的点
+            const minX = Math.min(...xData);
+            const maxX = Math.max(...xData);
+            const trendlineData = [
+                { x: minX, y: slope * minX + intercept },
+                { x: maxX, y: slope * maxX + intercept }
+            ];
+            
+            // 添加趋势线数据集
+            chart.data.datasets.push({
+                type: 'line',
+                label: '趋势线',
+                data: trendlineData,
+                borderColor: 'rgba(255, 99, 132, 0.8)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                pointRadius: 0
+            });
+            
+            chart.update();
+        }
+    </script>
+</body>
+</html>

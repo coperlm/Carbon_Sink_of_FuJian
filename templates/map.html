@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地图展示 - 福建省碳汇量可视化系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #map-container {
+            height: 600px;
+            width: 100%;
+            border-radius: 0.5rem;
+        }
+        .info-box {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        .info-box h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+        .legend {
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <nav class="bg-green-700 text-white shadow-lg">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+                        <h1 class="text-2xl font-bold">福建省碳汇量可视化系统</h1>
+                    </div>
+                    <ul class="flex space-x-6">
+                        <li><a href="/" class="hover:text-green-200 font-medium">首页</a></li>
+                        <li><a href="/map" class="hover:text-green-200 font-medium">地图展示</a></li>
+                        <li><a href="/trends" class="hover:text-green-200 font-medium">趋势分析</a></li>
+                        <li><a href="/comparison" class="hover:text-green-200 font-medium">区域对比</a></li>
+                        <li><a href="/factors" class="hover:text-green-200 font-medium">环境因素</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主要内容区 -->
+        <main class="flex-grow container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold text-green-700 mb-6">福建省碳汇量地图展示</h1>
+            
+            <!-- 地图控制面板 -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+                <div class="lg:col-span-3">
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <div id="map-container"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">数据选择</h2>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="data-type">
+                                展示数据
+                            </label>
+                            <select id="data-type" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="carbon_sink">碳汇量</option>
+                                <option value="forest_coverage">森林覆盖率</option>
+                                <option value="forest_area">森林面积</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="year-select">
+                                数据年份
+                            </label>
+                            <select id="year-select" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                                <option value="2021">2021</option>
+                                <option value="2020">2020</option>
+                                <option value="2019">2019</option>
+                                <option value="2018">2018</option>
+                                <option value="2017">2017</option>
+                                <option value="2016">2016</option>
+                                <option value="2015">2015</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button id="update-map" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                                更新地图
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">地区信息</h2>
+                        <div id="region-info">
+                            <p class="text-gray-600 mb-2">点击地图查看区域详细信息</p>
+                            <div id="selected-region" class="hidden">
+                                <h3 class="text-lg font-semibold text-green-700 mb-2" id="region-name"></h3>
+                                <div class="space-y-2">
+                                    <p class="text-sm"><span class="font-medium">碳汇总量:</span> <span id="region-carbon"></span> 万吨CO₂当量</p>
+                                    <p class="text-sm"><span class="font-medium">森林覆盖率:</span> <span id="region-forest-coverage"></span>%</p>
+                                    <p class="text-sm"><span class="font-medium">森林面积:</span> <span id="region-forest-area"></span> 万公顷</p>
+                                </div>
+                                <div class="mt-4">
+                                    <h4 class="text-sm font-semibold mb-2">林地类型分布</h4>
+                                    <div id="forest-type-chart-container" class="mt-2" style="height: 200px;">
+                                        <canvas id="forest-type-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 图例说明 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">图例与说明</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">颜色说明</h3>
+                        <div class="flex items-center mb-2">
+                            <div class="w-4 h-4 bg-red-500 mr-2"></div>
+                            <span>较低 (≤ 100万吨CO₂当量)</span>
+                        </div>
+                        <div class="flex items-center mb-2">
+                            <div class="w-4 h-4 bg-yellow-500 mr-2"></div>
+                            <span>中等 (100-200万吨CO₂当量)</span>
+                        </div>
+                        <div class="flex items-center mb-2">
+                            <div class="w-4 h-4 bg-green-300 mr-2"></div>
+                            <span>较高 (200-300万吨CO₂当量)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-green-600 mr-2"></div>
+                            <span>高 (≥ 300万吨CO₂当量)</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">数据来源</h3>
+                        <p class="text-gray-600">
+                            数据来源于福建省生态环境厅、福建省自然资源厅以及国家碳汇监测平台等官方渠道，
+                            经过专业数据处理和分析整理而成。
+                        </p>
+                        <p class="text-gray-600 mt-2">
+                            地图数据每年更新一次，反映了福建省各地区的碳汇现状和变化趋势。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部页脚 -->
+        <footer class="bg-green-800 text-white py-6">
+            <div class="container mx-auto px-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">关于我们</h3>
+                        <p class="text-green-200">福建省碳汇量可视化系统提供了丰富的数据可视化功能，帮助用户了解福建省各地区碳汇情况。</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">相关链接</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-green-200 hover:text-white">福建省生态环境厅</a></li>
+                            <li><a href="#" class="text-green-200 hover:text-white">碳中和研究中心</a></li>
+                            <li><a href="#" class="text-green-200 hover:text-white">生态文明建设</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">联系我们</h3>
+                        <p class="text-green-200">邮箱：contact@fujian-carbonsink.org</p>
+                        <p class="text-green-200">电话：0591-12345678</p>
+                    </div>
+                </div>
+                <div class="border-t border-green-700 mt-6 pt-6 text-center">
+                    <p class="text-green-200">© 2025 福建省碳汇量可视化系统 - 保留所有权利</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // 福建省各地市的大致经纬度（简化版）
+        const FUJIAN_REGIONS = {
+            '福州市': [26.08, 119.30],
+            '厦门市': [24.48, 118.10],
+            '莆田市': [25.42, 119.01],
+            '三明市': [26.27, 117.64],
+            '泉州市': [24.87, 118.68],
+            '漳州市': [24.51, 117.65],
+            '南平市': [27.34, 118.12],
+            '龙岩市': [25.09, 117.01],
+            '宁德市': [26.66, 119.55],
+            '平潭综合试验区': [25.49, 119.78]
+        };
+
+        // 初始化地图
+        const map = L.map('map-container').setView([26.08, 118.30], 8);
+
+        // 添加底图
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // 存储各区域的多边形
+        let regionPolygons = {};
+        let regionData = {};
+        let currentDataType = 'carbon_sink';
+        let selectedRegion = null;
+        let forestTypeChart = null;
+
+        // 初始化加载数据和地图
+        loadData();
+
+        // 数据加载函数
+        function loadData() {
+            fetch('/api/carbon_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        regionData = data.data;
+                        updateMap();
+                    }
+                })
+                .catch(error => console.error('获取数据失败:', error));
+        }
+
+        // 更新地图的函数
+        function updateMap() {
+            // 清除现有的多边形
+            for (let region in regionPolygons) {
+                if (regionPolygons[region]) {
+                    map.removeLayer(regionPolygons[region]);
+                }
+            }
+            regionPolygons = {};
+
+            // 确定数据范围和颜色
+            const values = regionData[currentDataType];
+            const maxValue = Math.max(...values);
+            const minValue = Math.min(...values);
+
+            // 为每个地区创建圆形标记
+            regionData.regions.forEach((region, i) => {
+                if (FUJIAN_REGIONS[region] && values[i]) {
+                    const value = values[i];
+                    let color;
+                    
+                    // 根据数据类型设置不同的颜色范围
+                    if (currentDataType === 'carbon_sink') {
+                        // 碳汇量的颜色范围
+                        if (value < 100) color = '#ef4444'; // red-500
+                        else if (value < 200) color = '#eab308'; // yellow-500
+                        else if (value < 300) color = '#86efac'; // green-300
+                        else color = '#16a34a'; // green-600
+                    } else if (currentDataType === 'forest_coverage') {
+                        // 森林覆盖率的颜色范围
+                        if (value < 45) color = '#ef4444';
+                        else if (value < 55) color = '#eab308';
+                        else if (value < 65) color = '#86efac';
+                        else color = '#16a34a';
+                    } else {
+                        // 森林面积的颜色范围
+                        if (value < 50) color = '#ef4444';
+                        else if (value < 80) color = '#eab308';
+                        else if (value < 110) color = '#86efac';
+                        else color = '#16a34a';
+                    }
+                    
+                    // 创建圆形标记
+                    const circle = L.circle(FUJIAN_REGIONS[region], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.7,
+                        radius: 15000 + (value / maxValue) * 25000
+                    });
+                    
+                    // 添加弹出信息
+                    circle.bindTooltip(`${region}: ${value}`);
+                    
+                    // 点击事件处理
+                    circle.on('click', function() {
+                        selectedRegion = region;
+                        showRegionDetails(region, i);
+                    });
+                    
+                    circle.addTo(map);
+                    regionPolygons[region] = circle;
+                }
+            });
+        }
+
+        // 显示地区详细信息
+        function showRegionDetails(region, index) {
+            document.getElementById('selected-region').classList.remove('hidden');
+            document.getElementById('region-name').textContent = region;
+            document.getElementById('region-carbon').textContent = regionData.carbon_sink[index];
+            document.getElementById('region-forest-coverage').textContent = regionData.forest_coverage[index];
+            document.getElementById('region-forest-area').textContent = regionData.forest_area[index];
+            
+            // 模拟森林类型数据
+            const forestTypes = ['常绿阔叶林', '常绿针叶林', '落叶阔叶林', '针阔混交林', '竹林', '红树林', '灌木林'];
+            const forestValues = generateRandomForestTypeData();
+            
+            // 更新森林类型饼图
+            updateForestTypeChart(forestTypes, forestValues);
+        }
+        
+        // 生成随机的森林类型数据（实际项目中应该使用真实数据）
+        function generateRandomForestTypeData() {
+            const values = [];
+            let remaining = 100;
+            
+            for (let i = 0; i < 6; i++) {
+                if (i === 5) {
+                    values.push(remaining);
+                } else {
+                    const value = Math.floor(Math.random() * (remaining - 5));
+                    values.push(value);
+                    remaining -= value;
+                }
+            }
+            
+            return values;
+        }
+        
+        // 更新森林类型饼图
+        function updateForestTypeChart(labels, data) {
+            const ctx = document.getElementById('forest-type-chart').getContext('2d');
+            
+            if (forestTypeChart) {
+                forestTypeChart.destroy();
+            }
+            
+            forestTypeChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#10b981', // 绿色
+                            '#34d399',
+                            '#6ee7b7',
+                            '#a7f3d0',
+                            '#d1fae5',
+                            '#ecfdf5',
+                            '#f0fdfa'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 更新按钮事件监听
+        document.getElementById('update-map').addEventListener('click', function() {
+            currentDataType = document.getElementById('data-type').value;
+            updateMap();
+        });
+    </script>
+</body>
+</html>

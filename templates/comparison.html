@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>区域对比 - 福建省碳汇量可视化系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <nav class="bg-green-700 text-white shadow-lg">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="w-10 h-10 mr-3">
+                        <h1 class="text-2xl font-bold">福建省碳汇量可视化系统</h1>
+                    </div>
+                    <ul class="flex space-x-6">
+                        <li><a href="/" class="hover:text-green-200 font-medium">首页</a></li>
+                        <li><a href="/map" class="hover:text-green-200 font-medium">地图展示</a></li>
+                        <li><a href="/trends" class="hover:text-green-200 font-medium">趋势分析</a></li>
+                        <li><a href="/comparison" class="hover:text-green-200 font-medium">区域对比</a></li>
+                        <li><a href="/factors" class="hover:text-green-200 font-medium">环境因素</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主要内容区 -->
+        <main class="flex-grow container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold text-green-700 mb-6">福建省各地区碳汇量对比分析</h1>
+            
+            <!-- 对比分析控制面板 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-3">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">数据选择与筛选</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="data-type">
+                                    对比数据类型
+                                </label>
+                                <select id="data-type" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value="carbon_sink">碳汇量</option>
+                                    <option value="forest_coverage">森林覆盖率</option>
+                                    <option value="forest_area">森林面积</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="chart-type">
+                                    图表类型
+                                </label>
+                                <select id="chart-type" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value="bar">柱状图</option>
+                                    <option value="radar">雷达图</option>
+                                    <option value="polar">极坐标图</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="year-select">
+                                    数据年份
+                                </label>
+                                <select id="year-select" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value="2025">2025</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2023">2023</option>
+                                    <option value="2022">2022</option>
+                                    <option value="2021">2021</option>
+                                    <option value="2020">2020</option>
+                                    <option value="2019">2019</option>
+                                    <option value="2018">2018</option>
+                                    <option value="2017">2017</option>
+                                    <option value="2016">2016</option>
+                                    <option value="2015">2015</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="update-comparison" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                            更新对比图
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 对比图表 -->
+            <div class="grid grid-cols-1 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4" id="comparison-title">各地区碳汇量对比</h2>
+                    <div style="height: 500px;">
+                        <canvas id="comparison-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 排名表格 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">地区排名</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="bg-green-100">
+                                <th class="px-4 py-2 text-left">排名</th>
+                                <th class="px-4 py-2 text-left">地区</th>
+                                <th class="px-4 py-2 text-left" id="ranking-data-header">碳汇量(万吨CO₂当量)</th>
+                                <th class="px-4 py-2 text-left">占全省比例</th>
+                                <th class="px-4 py-2 text-left">同比增长</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ranking-table-body">
+                            <!-- 这里将通过JavaScript动态填充数据 -->
+                            <tr><td colspan="5" class="px-4 py-2 text-center">加载数据中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 对比分析说明 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">对比分析解读</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-green-700 mb-2">区域差异分析</h3>
+                        <p class="text-gray-600">
+                            福建省各地区在碳汇量方面存在明显差异，这主要与各地区的地理特征、森林资源禀赋、经济发展水平等因素相关。
+                            山区地市如南平、龙岩和三明，拥有丰富的森林资源，碳汇总量较大；
+                            沿海城市如厦门、福州，尽管经济较为发达，但由于土地资源有限和城市化水平高，森林覆盖率相对较低。
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-green-700 mb-2">政策建议</h3>
+                        <p class="text-gray-600 mb-3">
+                            基于区域差异，可提出以下建议：
+                        </p>
+                        <ul class="list-disc pl-5 text-gray-600 space-y-1">
+                            <li>山区地市可优化林分结构，提高碳汇效率</li>
+                            <li>沿海城市可加强城市绿化和湿地保护</li>
+                            <li>建立健全区域碳汇合作机制，实现资源优势互补</li>
+                            <li>加强碳汇监测评估体系建设，提高数据精准性</li>
+                            <li>完善生态补偿机制，推动生态保护与经济发展协调统一</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部页脚 -->
+        <footer class="bg-green-800 text-white py-6">
+            <div class="container mx-auto px-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">关于我们</h3>
+                        <p class="text-green-200">福建省碳汇量可视化系统提供了丰富的数据可视化功能，帮助用户了解福建省各地区碳汇情况。</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">相关链接</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-green-200 hover:text-white">福建省生态环境厅</a></li>
+                            <li><a href="#" class="text-green-200 hover:text-white">碳中和研究中心</a></li>
+                            <li><a href="#" class="text-green-200 hover:text-white">生态文明建设</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">联系我们</h3>
+                        <p class="text-green-200">邮箱：contact@fujian-carbonsink.org</p>
+                        <p class="text-green-200">电话：0591-12345678</p>
+                    </div>
+                </div>
+                <div class="border-t border-green-700 mt-6 pt-6 text-center">
+                    <p class="text-green-200">© 2025 福建省碳汇量可视化系统 - 保留所有权利</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let comparisonChart;
+        let regionData = null;
+        let currentDataType = 'carbon_sink';
+        let currentChartType = 'bar';
+        
+        // 页面加载完成后立即加载默认数据和图表
+        document.addEventListener('DOMContentLoaded', function() {
+            loadComparisonData();
+            
+            // 更新按钮点击事件
+            document.getElementById('update-comparison').addEventListener('click', function() {
+                currentDataType = document.getElementById('data-type').value;
+                currentChartType = document.getElementById('chart-type').value;
+                updateChart();
+            });
+            
+            // 图表类型变更事件
+            document.getElementById('chart-type').addEventListener('change', function() {
+                currentChartType = this.value;
+            });
+            
+            // 数据类型变更事件
+            document.getElementById('data-type').addEventListener('change', function() {
+                currentDataType = this.value;
+                updateDataTypeHeader();
+            });
+        });
+        
+        // 更新数据类型表头
+        function updateDataTypeHeader() {
+            let headerText = '碳汇量(万吨CO₂当量)';
+            
+            if (currentDataType === 'forest_coverage') {
+                headerText = '森林覆盖率(%)';
+            } else if (currentDataType === 'forest_area') {
+                headerText = '森林面积(万公顷)';
+            }
+            
+            document.getElementById('ranking-data-header').textContent = headerText;
+            document.getElementById('comparison-title').textContent = `各地区${headerText.split('(')[0]}对比`;
+        }
+        
+        // 加载对比数据
+        function loadComparisonData() {
+            fetch('/api/carbon_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        regionData = data.data;
+                        updateChart();
+                        updateRankingTable();
+                    } else {
+                        console.error('获取对比数据失败:', data.message);
+                    }
+                })
+                .catch(error => console.error('获取对比数据出错:', error));
+        }
+        
+        // 更新图表
+        function updateChart() {
+            if (!regionData) return;
+            
+            const ctx = document.getElementById('comparison-chart').getContext('2d');
+            
+            // 如果图表已存在，先销毁它
+            if (comparisonChart) {
+                comparisonChart.destroy();
+            }
+            
+            // 准备数据
+            const labels = regionData.regions;
+            const data = regionData[currentDataType];
+            
+            // 设置图表选项，根据图表类型
+            let chartConfig = {};
+            
+            if (currentChartType === 'bar') {
+                chartConfig = {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: getDataTypeLabel(),
+                            data: data,
+                            backgroundColor: 'rgba(52, 211, 153, 0.7)',
+                            borderColor: 'rgb(16, 185, 129)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `福建省各地区${getDataTypeLabel()}对比`
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: currentDataType === 'forest_coverage',
+                                title: {
+                                    display: true,
+                                    text: getDataTypeLabel()
+                                }
+                            }
+                        }
+                    }
+                };
+            } else if (currentChartType === 'radar') {
+                chartConfig = {
+                    type: 'radar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: getDataTypeLabel(),
+                            data: data,
+                            backgroundColor: 'rgba(52, 211, 153, 0.2)',
+                            borderColor: 'rgb(16, 185, 129)',
+                            pointBackgroundColor: 'rgb(16, 185, 129)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(16, 185, 129)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `福建省各地区${getDataTypeLabel()}雷达图`
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: currentDataType === 'forest_coverage'
+                            }
+                        }
+                    }
+                };
+            } else if (currentChartType === 'polar') {
+                chartConfig = {
+                    type: 'polarArea',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                'rgba(52, 211, 153, 0.7)',
+                                'rgba(16, 185, 129, 0.7)',
+                                'rgba(5, 150, 105, 0.7)',
+                                'rgba(4, 120, 87, 0.7)',
+                                'rgba(6, 95, 70, 0.7)',
+                                'rgba(20, 184, 166, 0.7)',
+                                'rgba(13, 148, 136, 0.7)',
+                                'rgba(15, 118, 110, 0.7)',
+                                'rgba(17, 94, 89, 0.7)',
+                                'rgba(19, 78, 74, 0.7)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `福建省各地区${getDataTypeLabel()}极坐标图`
+                            },
+                            legend: {
+                                position: 'right'
+                            }
+                        }
+                    }
+                };
+            }
+            
+            comparisonChart = new Chart(ctx, chartConfig);
+        }
+        
+        // 更新排名表格
+        function updateRankingTable() {
+            if (!regionData) return;
+            
+            const tableBody = document.getElementById('ranking-table-body');
+            tableBody.innerHTML = '';
+            
+            // 获取数据并排序
+            const sortedData = [];
+            
+            for (let i = 0; i < regionData.regions.length; i++) {
+                sortedData.push({
+                    region: regionData.regions[i],
+                    value: regionData[currentDataType][i]
+                });
+            }
+            
+            sortedData.sort((a, b) => b.value - a.value);
+            
+            // 计算总量
+            const total = sortedData.reduce((sum, item) => sum + item.value, 0);
+            
+            // 填充表格
+            sortedData.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                
+                // 模拟数据：同比增长为-5%到+8%之间的随机值
+                const growthRate = (Math.random() * 13 - 5).toFixed(1);
+                const growthClass = parseFloat(growthRate) >= 0 ? 'text-green-600' : 'text-red-600';
+                const growthIcon = parseFloat(growthRate) >= 0 ? '↑' : '↓';
+                
+                row.innerHTML = `
+                    <td class="px-4 py-2 font-medium">${index + 1}</td>
+                    <td class="px-4 py-2">${item.region}</td>
+                    <td class="px-4 py-2">${item.value.toFixed(2)}</td>
+                    <td class="px-4 py-2">${(item.value / total * 100).toFixed(2)}%</td>
+                    <td class="px-4 py-2 ${growthClass}">${growthIcon} ${Math.abs(growthRate)}%</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 获取数据类型标签
+        function getDataTypeLabel() {
+            switch(currentDataType) {
+                case 'carbon_sink':
+                    return '碳汇量(万吨CO₂当量)';
+                case 'forest_coverage':
+                    return '森林覆盖率(%)';
+                case 'forest_area':
+                    return '森林面积(万公顷)';
+                default:
+                    return '碳汇量(万吨CO₂当量)';
+            }
+        }
+    </script>
+</body>
+</html>
