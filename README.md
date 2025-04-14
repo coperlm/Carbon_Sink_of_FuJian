@@ -21,28 +21,23 @@
 
 ## 安装与使用
 
+### 拉取代码
+
+````
+git clone https://github.com/coperlm/Carbon_Sink_of_FuJian.git
+````
+
 ### 安装依赖
 
 ```bash
-# 安装后端依赖
-cd backend
+cd Carbon_Sink_of_FuJian
 pip install -r requirements.txt
-
-# 安装前端依赖
-cd ../frontend
-npm install
 ```
 
 ### 启动应用
 
 ```bash
-# 启动后端服务
-cd backend
 python app.py
-
-# 前端开发模式（可选）
-cd ../frontend
-npm run dev
 ```
 
 默认情况下，应用将在 http://localhost:5000 启动。
@@ -51,14 +46,14 @@ npm run dev
 
 ```
 fujian_carbon_sink/
-├── backend/             # Python后端代码
-│   ├── app.py           # Flask应用主文件
-│   ├── data/            # 数据文件和处理模块
-│   └── models/          # 数据模型
+├── app.py           # Flask应用主文件
+├── data/            # 数据文件和处理模块
+└── models/          # 数据模型
 ├── frontend/            # 前端代码
 │   ├── src/             # 源代码
 │   ├── public/          # 静态资源
 │   └── index.html       # 主页面
+│   └── other*.html       # 其他页面
 └── README.md            # 项目文档
 ```
 
